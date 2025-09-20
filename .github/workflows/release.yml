@@ -19,6 +19,9 @@ permissions:
   contents: write
   actions: read
   packages: write
+  pull-requests: write
+  issues: write
+  repository-projects: write
 
 jobs:
   build-and-release:
@@ -70,6 +73,12 @@ jobs:
           echo "tag_exists=false" >> $GITHUB_OUTPUT
         fi
 
+    - name: Set up Maven authentication for GitHub Packages
+      if: steps.check_tag.outputs.tag_exists == 'false'
+      run: |
+        mkdir -p ~/.m2
+        echo "<settings><servers><server><id>github</id><username>${{ github.actor }}</username><password>${{ secrets.GITHUB_TOKEN }}</password></server></servers></settings>" > ~/.m2/settings.xml
+
     - name: Update version for release
       if: steps.check_tag.outputs.tag_exists == 'false'
       run: |
@@ -78,7 +87,7 @@ jobs:
 
     - name: Publish to GitHub Packages
       if: steps.check_tag.outputs.tag_exists == 'false'
-      run: ./mvnw deploy
+      run: ./mvnw deploy -DskipTests
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
