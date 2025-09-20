@@ -182,11 +182,3 @@ User context is stored in `ThreadLocal`, making it safe for concurrent requests 
 ```bash
 ./mvnw test
 ```
-
-## License
-
-[Add your license here]
-
-## Contributing
-
-[Add contributing guidelines here]
