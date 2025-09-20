@@ -70,12 +70,25 @@ jobs:
           echo "tag_exists=false" >> $GITHUB_OUTPUT
         fi
 
+    - name: Update version for release
+      if: steps.check_tag.outputs.tag_exists == 'false'
+      run: |
+        ./mvnw versions:set -DnewVersion=${{ steps.get_version.outputs.release_version }}
+        ./mvnw clean package -DskipTests
+
+    - name: Publish to GitHub Packages
+      if: steps.check_tag.outputs.tag_exists == 'false'
+      run: ./mvnw deploy
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
     - name: Create Git tag
       if: steps.check_tag.outputs.tag_exists == 'false'
       run: |
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
         git tag -a "${{ steps.get_version.outputs.tag_name }}" -m "Release ${{ steps.get_version.outputs.release_version }}"
+        git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
         git push origin "${{ steps.get_version.outputs.tag_name }}"
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -89,6 +102,27 @@ jobs:
         body: |
           ## Token Authentication Library v${{ steps.get_version.outputs.release_version }}
           
+          ### 📦 Maven Dependency
+          
+          **GitHub Packages:**
+          ```xml
+          <dependency>
+              <groupId>com.leveledcv</groupId>
+              <artifactId>token-authentication-lib</artifactId>
+              <version>${{ steps.get_version.outputs.release_version }}</version>
+          </dependency>
+          ```
+          
+          Add this repository to your `pom.xml`:
+          ```xml
+          <repositories>
+              <repository>
+                  <id>github</id>
+                  <url>https://maven.pkg.github.com/leveledcv/token-authentication-library</url>
+              </repository>
+          </repositories>
+          ```
+          
           ### Features
           - ✅ `@RequireAuth` annotation for method and class-level authentication
           - ✅ Configurable token verification service URL
@@ -97,16 +131,6 @@ jobs:
           - ✅ Thread-safe authentication context
           - ✅ Automatic 403 response for invalid tokens
           - ✅ Convenient `User user = AuthUtil.getUser()` access pattern
-          
-          ### Usage
-          Add this dependency to your microservice's `pom.xml`:
-          ```xml
-          <dependency>
-              <groupId>com.leveledcv</groupId>
-              <artifactId>token-authentication-lib</artifactId>
-              <version>${{ steps.get_version.outputs.release_version }}</version>
-          </dependency>
-          ```
           
           ### Configuration
           ```yaml
@@ -129,9 +153,9 @@ jobs:
           
           **Full Changelog**: https://github.com/${{ github.repository }}/compare/...v${{ steps.get_version.outputs.release_version }}
         files: |
-          ./target/token-authentication-lib-${{ steps.get_version.outputs.current_version }}.jar
-          ./target/token-authentication-lib-${{ steps.get_version.outputs.current_version }}-sources.jar
-          ./target/token-authentication-lib-${{ steps.get_version.outputs.current_version }}-javadoc.jar
+          ./target/token-authentication-lib-${{ steps.get_version.outputs.release_version }}.jar
+          ./target/token-authentication-lib-${{ steps.get_version.outputs.release_version }}-sources.jar
+          ./target/token-authentication-lib-${{ steps.get_version.outputs.release_version }}-javadoc.jar
         draft: false
         prerelease: false
         token: ${{ secrets.GITHUB_TOKEN }}
