@@ -2,8 +2,8 @@
 
 A Spring Boot library that provides `@RequireAuth` annotation for easy authentication across microservices.
 
-[![CI Build](https://github.com/shreyjain/token-authentication-lib/actions/workflows/ci.yml/badge.svg)](https://github.com/shreyjain/token-authentication-lib/actions/workflows/ci.yml)
-[![Release](https://github.com/shreyjain/token-authentication-lib/actions/workflows/release.yml/badge.svg)](https://github.com/shreyjain/token-authentication-lib/actions/workflows/release.yml)
+[![CI Build](https://github.com/leveled-cv/token-authentication-library/actions/workflows/ci.yml/badge.svg)](https://github.com/shreyjain/token-authentication-lib/actions/workflows/ci.yml)
+[![Release](https://github.com/leveled-cv/token-authentication-library/actions/workflows/release.yml/badge.svg)](https://github.com/shreyjain/token-authentication-lib/actions/workflows/release.yml)
 
 ## Features
 
