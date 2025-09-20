@@ -182,3 +182,19 @@ User context is stored in `ThreadLocal`, making it safe for concurrent requests 
 ```bash
 ./mvnw test
 ```
+```xml
+<repositories>
+  <repository>
+    <id>jitpack.io</id>
+    <url>https://jitpack.io</url>
+  </repository>
+</repositories>
+
+<dependencies>
+  <dependency>
+    <groupId>com.github.leveled-cv</groupId>
+    <artifactId>token-authentication-library</artifactId>
+    <version>v0.1.1</version>
+  </dependency>
+</dependencies>
+```
