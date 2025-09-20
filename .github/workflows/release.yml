@@ -1,0 +1,162 @@
+name: Release Authentication Library
+
+on:
+  push:
+    branches: [ main, master ]
+    paths:
+      - 'pom.xml'
+      - 'src/**'
+  workflow_dispatch:
+    inputs:
+      release_type:
+        description: 'Release type'
+        required: true
+        default: 'patch'
+        type: choice
+        options:
+        - patch
+        - minor
+        - major
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        cache: maven
+
+    - name: Make Maven wrapper executable
+      run: chmod +x ./mvnw
+
+    - name: Run tests
+      run: ./mvnw clean test
+
+    - name: Build JAR
+      run: ./mvnw clean package -DskipTests
+
+    - name: Get current version
+      id: get_version
+      run: |
+        VERSION=$(./mvnw help:evaluate -Dexpression=project.version -q -DforceStdout)
+        echo "current_version=$VERSION" >> $GITHUB_OUTPUT
+        
+        # Remove SNAPSHOT suffix for release
+        RELEASE_VERSION=${VERSION%-SNAPSHOT}
+        echo "release_version=$RELEASE_VERSION" >> $GITHUB_OUTPUT
+        
+        # Create tag name
+        TAG_NAME="v$RELEASE_VERSION"
+        echo "tag_name=$TAG_NAME" >> $GITHUB_OUTPUT
+
+    - name: Check if tag exists
+      id: check_tag
+      run: |
+        if git rev-parse "${{ steps.get_version.outputs.tag_name }}" >/dev/null 2>&1; then
+          echo "tag_exists=true" >> $GITHUB_OUTPUT
+        else
+          echo "tag_exists=false" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Create Git tag
+      if: steps.check_tag.outputs.tag_exists == 'false'
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git tag -a "${{ steps.get_version.outputs.tag_name }}" -m "Release ${{ steps.get_version.outputs.release_version }}"
+        git push origin "${{ steps.get_version.outputs.tag_name }}"
+
+    - name: Create Release
+      if: steps.check_tag.outputs.tag_exists == 'false'
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ steps.get_version.outputs.tag_name }}
+        release_name: "Token Authentication Library ${{ steps.get_version.outputs.release_version }}"
+        body: |
+          ## Token Authentication Library v${{ steps.get_version.outputs.release_version }}
+          
+          ### Features
+          - ✅ `@RequireAuth` annotation for method and class-level authentication
+          - ✅ Configurable token verification service URL
+          - ✅ Automatic token extraction from HTTP headers
+          - ✅ User context available in controllers (username, email, status)
+          - ✅ Thread-safe authentication context
+          - ✅ Automatic 403 response for invalid tokens
+          - ✅ Convenient `User user = AuthUtil.getUser()` access pattern
+          
+          ### Usage
+          Add this dependency to your microservice's `pom.xml`:
+          ```xml
+          <dependency>
+              <groupId>com.leveledcv</groupId>
+              <artifactId>token-authentication-lib</artifactId>
+              <version>${{ steps.get_version.outputs.release_version }}</version>
+          </dependency>
+          ```
+          
+          ### Configuration
+          ```yaml
+          # application.yml
+          auth:
+            token-verify-url: http://localhost:8081/token/verify
+            token-header: Authorization
+            token-prefix: "Bearer "
+          ```
+          
+          ### Example Usage
+          ```java
+          @RequireAuth
+          @GetMapping("/protected")
+          public ResponseEntity<String> protectedEndpoint() {
+              User user = AuthUtil.getUser();
+              return ResponseEntity.ok("Hello " + user.username);
+          }
+          ```
+          
+          **Full Changelog**: https://github.com/${{ github.repository }}/compare/...v${{ steps.get_version.outputs.release_version }}
+        draft: false
+        prerelease: false
+
+    - name: Upload JAR to Release
+      if: steps.check_tag.outputs.tag_exists == 'false'
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./target/token-authentication-lib-${{ steps.get_version.outputs.release_version }}.jar
+        asset_name: token-authentication-lib-${{ steps.get_version.outputs.release_version }}.jar
+        asset_content_type: application/java-archive
+
+    - name: Upload Sources JAR to Release
+      if: steps.check_tag.outputs.tag_exists == 'false'
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./target/token-authentication-lib-${{ steps.get_version.outputs.release_version }}-sources.jar
+        asset_name: token-authentication-lib-${{ steps.get_version.outputs.release_version }}-sources.jar
+        asset_content_type: application/java-archive
+
+    - name: Upload Javadoc JAR to Release
+      if: steps.check_tag.outputs.tag_exists == 'false'
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./target/token-authentication-lib-${{ steps.get_version.outputs.release_version }}-javadoc.jar
+        asset_name: token-authentication-lib-${{ steps.get_version.outputs.release_version }}-javadoc.jar
+        asset_content_type: application/java-archive
