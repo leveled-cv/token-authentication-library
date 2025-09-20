@@ -3,9 +3,6 @@ name: Release Authentication Library
 on:
   push:
     branches: [ main, master ]
-    paths:
-      - 'pom.xml'
-      - 'src/**'
   workflow_dispatch:
     inputs:
       release_type:
