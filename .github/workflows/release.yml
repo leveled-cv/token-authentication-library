@@ -41,8 +41,8 @@ jobs:
     - name: Run tests
       run: ./mvnw clean test
 
-    - name: Build JAR
-      run: ./mvnw clean package -DskipTests
+    - name: Build JAR with sources and javadoc
+      run: ./mvnw clean package source:jar javadoc:jar -DskipTests
 
     - name: Get current version
       id: get_version
@@ -77,12 +77,10 @@ jobs:
 
     - name: Create Release
       if: steps.check_tag.outputs.tag_exists == 'false'
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      uses: softprops/action-gh-release@v2
       with:
         tag_name: ${{ steps.get_version.outputs.tag_name }}
-        release_name: "Token Authentication Library ${{ steps.get_version.outputs.release_version }}"
+        name: "Token Authentication Library ${{ steps.get_version.outputs.release_version }}"
         body: |
           ## Token Authentication Library v${{ steps.get_version.outputs.release_version }}
           
@@ -125,38 +123,9 @@ jobs:
           ```
           
           **Full Changelog**: https://github.com/${{ github.repository }}/compare/...v${{ steps.get_version.outputs.release_version }}
+        files: |
+          ./target/token-authentication-lib-${{ steps.get_version.outputs.current_version }}.jar
+          ./target/token-authentication-lib-${{ steps.get_version.outputs.current_version }}-sources.jar
+          ./target/token-authentication-lib-${{ steps.get_version.outputs.current_version }}-javadoc.jar
         draft: false
         prerelease: false
-
-    - name: Upload JAR to Release
-      if: steps.check_tag.outputs.tag_exists == 'false'
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./target/token-authentication-lib-${{ steps.get_version.outputs.release_version }}.jar
-        asset_name: token-authentication-lib-${{ steps.get_version.outputs.release_version }}.jar
-        asset_content_type: application/java-archive
-
-    - name: Upload Sources JAR to Release
-      if: steps.check_tag.outputs.tag_exists == 'false'
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./target/token-authentication-lib-${{ steps.get_version.outputs.release_version }}-sources.jar
-        asset_name: token-authentication-lib-${{ steps.get_version.outputs.release_version }}-sources.jar
-        asset_content_type: application/java-archive
-
-    - name: Upload Javadoc JAR to Release
-      if: steps.check_tag.outputs.tag_exists == 'false'
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./target/token-authentication-lib-${{ steps.get_version.outputs.release_version }}-javadoc.jar
-        asset_name: token-authentication-lib-${{ steps.get_version.outputs.release_version }}-javadoc.jar
-        asset_content_type: application/java-archive
