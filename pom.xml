@@ -10,7 +10,7 @@
     </parent>
     <groupId>com.leveledcv</groupId>
     <artifactId>token-authentication-lib</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>0.1.0</version>
     <name>token-authentication-lib</name>
     <description>Spring Boot Token Authentication Library for LeveledCV microservices</description>
     <url>https://github.com/leveled-cv/token-authentication-library</url>
@@ -44,6 +44,11 @@
             <name>GitHub Packages</name>
             <url>https://maven.pkg.github.com/leveled-cv/token-authentication-library</url>
         </repository>
+        <snapshotRepository>
+            <id>github</id>
+            <name>GitHub Packages</name>
+            <url>https://maven.pkg.github.com/leveled-cv/token-authentication-library</url>
+        </snapshotRepository>
     </distributionManagement>
 
     <properties>

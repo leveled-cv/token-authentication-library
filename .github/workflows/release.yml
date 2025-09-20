@@ -77,7 +77,18 @@ jobs:
       if: steps.check_tag.outputs.tag_exists == 'false'
       run: |
         mkdir -p ~/.m2
-        echo "<settings><servers><server><id>github</id><username>${{ github.actor }}</username><password>${{ secrets.GITHUB_TOKEN }}</password></server></servers></settings>" > ~/.m2/settings.xml
+        cat > ~/.m2/settings.xml << EOF
+        <settings>
+          <servers>
+            <server>
+              <id>github</id>
+              <username>${{ github.actor }}</username>
+              <password>${{ secrets.GITHUB_TOKEN }}</password>
+            </server>
+          </servers>
+        </settings>
+        EOF
+        echo "Maven settings.xml created successfully"
 
     - name: Update version for release
       if: steps.check_tag.outputs.tag_exists == 'false'
@@ -87,7 +98,10 @@ jobs:
 
     - name: Publish to GitHub Packages
       if: steps.check_tag.outputs.tag_exists == 'false'
-      run: ./mvnw deploy -DskipTests
+      run: |
+        echo "Starting GitHub Packages deployment..."
+        ./mvnw deploy -DskipTests -X
+        echo "GitHub Packages deployment completed!"
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
