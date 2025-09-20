@@ -42,7 +42,7 @@ jobs:
       run: ./mvnw clean test
 
     - name: Build JAR with sources and javadoc
-      run: ./mvnw clean package source:jar javadoc:jar -DskipTests
+      run: ./mvnw clean package -DskipTests
 
     - name: Get current version
       id: get_version
